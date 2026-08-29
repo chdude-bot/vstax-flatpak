@@ -52,9 +52,9 @@ jobs:
           echo "Scanning for all available versions in /vstax/${YEAR}/..."
           
           # Try a wide range of versions and collect all that exist
-          for major in $(seq 1 20); do
-            for minor in $(seq 0 50); do
-              for build in $(seq 0 200 10); do
+          for major in $(seq 1 5); do
+            for minor in $(seq 0 30); do
+              for build in $(seq 0 50 5); do
                 TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.${major}.${minor}-${build}_amd64.deb"
                 
                 HTTP_CODE=$(curl -sI -m 3 "$TEST_URL" | grep -E "^HTTP" | awk '{print $2}')
