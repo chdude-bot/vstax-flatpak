@@ -73,7 +73,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "deb-url=$DEB_URL" >> $GITHUB_OUTPUT
           echo "found=true" >> $GITHUB_OUTPUT
-- name: Report results
+        - name: Report results
         id: report
         run: |
           YEAR="${{ github.event.inputs.year }}"
