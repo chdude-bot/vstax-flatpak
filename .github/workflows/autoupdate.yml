@@ -197,7 +197,21 @@ jobs:
           </component>
           EOF
       
+
+      - name: Check if manifest exists
+        id: check-file
+        run: |
+          YEAR="${{ needs.check-year.outputs.year }}"
+          if [ -f "ch.abraxas.vstax${YEAR}.yaml" ]; then
+            echo "manifest_exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Manifest already exists for VSTax ${YEAR}"
+          else
+            echo "manifest_exists=false" >> $GITHUB_OUTPUT
+            echo "✗ No existing manifest found"
+          fi
+
       - name: Create pull request
+        if: steps.check-file.outputs.manifest_exists != 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "Add VSTax ${{ needs.check-year.outputs.year }}"
