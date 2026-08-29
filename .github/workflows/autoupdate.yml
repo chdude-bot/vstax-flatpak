@@ -51,7 +51,7 @@ jobs:
           echo "Scanning for VSTax $YEAR version..."
           
           # Start from build 147 and go backwards to find the latest available
-          for build in $(seq 150 135); do
+          for build in $(seq 150 -1 130); do
             TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.0.10-${build}_amd64.deb"
             
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TEST_URL")
