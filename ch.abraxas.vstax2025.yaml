@@ -1,0 +1,46 @@
+# VSTax 2025 Flatpak Manifest
+# Auto-generated or manual
+app-id: ch.abraxas.vstax2025
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: vstax2025
+finish-args:
+  - --socket=wayland
+  - --socket=x11
+  - --socket=fallback-x11
+  - --share=ipc
+  - --socket=session-bus
+  - --socket=pulseaudio
+  - --device=dri
+  - --share=network
+  - --persist=.vstax2025
+  - --filesystem=host
+  - --filesystem=xdg-cache
+  - --filesystem=xdg-config
+  - --filesystem=xdg-data
+  - --filesystem=~/.local/share
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.gnome.SessionManager
+  - --filesystem=xdg-run/gvfsd
+modules:
+  - name: vstax2025
+    buildsystem: simple
+    build-commands:
+      - mkdir -p deb-extract && ar -x vstax2025.deb --output deb-extract && mkdir -p extracted && zstd -d -c deb-extract/data.tar.zst | tar -xf - -C extracted && cp -r extracted/usr/share/vstax2025/* . && rm -rf deb-extract extracted
+      - sed -i 's|cd /usr/share/vstax2025|cd /app/share/vstax2025|g' vstax2025.sh
+      - sed -i 's|/usr/bin/java|/app/share/vstax2025/jre/bin/java|g' vstax2025.sh
+      - sed -i 's|jre/bin/java -Xmx|jre/bin/java -Djdk.xml.enableExtensionFunctions=true -Xmx|g' vstax2025.sh
+      - mkdir -p /app/share/vstax2025 && cp -r . /app/share/vstax2025/
+      - install -Dm 755 /app/share/vstax2025/vstax2025.sh /app/bin/vstax2025
+      - install -Dm 644 /app/share/vstax2025/vstax2025.png /app/share/icons/hicolor/256x256/apps/ch.abraxas.vstax2025.png
+      - install -Dm 644 ch.abraxas.vstax2025.desktop -t /app/share/applications/
+      - install -Dm 644 ch.abraxas.vstax2025.metainfo.xml /app/share/metainfo/ch.abraxas.vstax2025.metainfo.xml
+    sources:
+      - type: file
+        url: https://sftp.vs.ch/vstax/2025/vstax2025_1.0.10-147_amd64.deb
+        sha256: 69fc4fa1813a7a746e4aa1d311b2ad803d985c7e40be0f4ab2f18f0976071418
+      - type: file
+        path: ch.abraxas.vstax2025.desktop
+      - type: file
+        path: ch.abraxas.vstax2025.metainfo.xml
