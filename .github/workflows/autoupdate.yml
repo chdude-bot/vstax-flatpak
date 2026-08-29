@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       year: ${{ steps.check.outputs.year }}
-      detected: ${{ steps.report.outputs.detected }}
+      detected: ${{ steps.check.outputs.detected }}
       deb-url: ${{ steps.check.outputs.deb-url }}
       sha256: ${{ steps.check.outputs.sha256 }}
       version: ${{ steps.check.outputs.version }}
@@ -73,7 +73,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "deb-url=$DEB_URL" >> $GITHUB_OUTPUT
           echo "found=true" >> $GITHUB_OUTPUT
-        - name: Report results
+      - name: Report results
         id: report
         run: |
           YEAR="${{ github.event.inputs.year }}"
@@ -197,20 +197,7 @@ jobs:
           </component>
           EOF
       
-
-      - name: Check if manifest exists
-        id: check-file
-        run: |
-          YEAR="${{ needs.check-year.outputs.year }}"
-          if [ -f "ch.abraxas.vstax${YEAR}.yaml" ]; then
-            echo "manifest_exists=true" >> $GITHUB_OUTPUT
-            echo "✓ Manifest already exists for VSTax ${YEAR}"
-          else
-            echo "manifest_exists=false" >> $GITHUB_OUTPUT
-            echo "✗ No existing manifest found"
-          fi
       - name: Create pull request
-        if: steps.check-file.outputs.manifest_exists != 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "Add VSTax ${{ needs.check-year.outputs.year }}"
