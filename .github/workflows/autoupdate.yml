@@ -53,7 +53,7 @@ jobs:
           echo "Scanning for available versions in /vstax/${YEAR}/..."
           
           # Scan all combinations of major.minor.build
-          for patch in $(seq 0 10); do
+          for minor in $(seq 0 10); do
             for patch in $(seq 0 10); do
               for build in $(seq 0 200 5); do
                 TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.${minor}.${patch}-${build}_amd64.deb"
