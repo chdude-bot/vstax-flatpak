@@ -1,0 +1,88 @@
+name: Test VSTax Version Detection
+
+on:
+  workflow_dispatch:
+    inputs:
+      year:
+        description: 'Year to test (e.g., 2025)'
+        required: true
+        default: '2025'
+
+jobs:
+  test-detection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test detection logic
+        id: detect
+        run: |
+          YEAR="${{ github.event.inputs.year }}"
+          
+          echo "=== Testing VSTax $YEAR Detection ==="
+          echo "Year: $YEAR"
+          echo ""
+          
+          # Test if directory is accessible
+          echo "1. Checking directory accessibility..."
+          HTTP_CODE=$(curl -sI -m 10 "https://sftp.vs.ch/vstax/${YEAR}/" | grep -E "^HTTP" | awk '{print $2}')
+          echo "   Directory HTTP Status: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "403" ]; then
+            echo "   ✓ Directory exists"
+            DIR_EXISTS=true
+          else
+            echo "   ✗ Directory not found (status: $HTTP_CODE)"
+            DIR_EXISTS=false
+          fi
+          
+          echo ""
+          
+          # Try to find a version
+          if [ "$DIR_EXISTS" = "true" ]; then
+            echo "2. Searching for latest version..."
+            
+            # Try a few common patterns
+            for minor in 10; do
+              for build in 147; do
+                TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.${minor}.${build}_amd64.deb"
+                echo "   Testing: $TEST_URL"
+                
+                HTTP_CODE=$(curl -sI -m 5 "$TEST_URL" | grep -E "^HTTP" | awk '{print $2}')
+                
+                if [ "$HTTP_CODE" = "200" ]; then
+                  echo "   ✓ Found version!"
+                  
+                  # Download and verify
+                  curl -L "$TEST_URL" -o "test-deb.deb"
+                  
+                  # Calculate SHA256
+                  SHA256=$(sha256sum "test-deb.deb" | cut -d' ' -f1)
+                  echo "   SHA256: $SHA256"
+                  
+                  # Show file info
+                  FILE_SIZE=$(stat -c%s "test-deb.deb")
+                  echo "   File size: $FILE_SIZE bytes"
+                  
+                  # Show deb contents
+                  echo ""
+                  echo "3. .deb file contents:"
+                  ar -tv "test-deb.deb"
+                  
+                  echo ""
+                  echo "=== Test Complete ==="
+                  
+                  echo "found=true" >> $GITHUB_OUTPUT
+                  echo "version=1.$minor-$build" >> $GITHUB_OUTPUT
+                  echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+                  
+                  break 2
+                fi
+              done
+            done
+          fi
+
+          if [ "${{ steps.detect.outputs.found }}" != "true" ]; then
+            echo "=== No version found ==="
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi

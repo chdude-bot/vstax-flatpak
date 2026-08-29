@@ -1,0 +1,253 @@
+# Auto-Detect and Create VSTax Flatpak Manifests
+# Automatically finds new VSTax years when they're released
+
+name: Auto-Update VSTax
+
+on:
+  schedule:
+    # Daily check at 8 AM UTC
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      year:
+        description: 'Year to check (e.g., 2026)'
+        required: true
+        default: '2026'
+
+jobs:
+  check-year:
+    runs-on: ubuntu-22.04
+    outputs:
+      year: ${{ steps.check.outputs.year }}
+      detected: ${{ steps.check.outputs.detected }}
+      deb-url: ${{ steps.check.outputs.deb-url }}
+      sha256: ${{ steps.check.outputs.sha256 }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check directory exists
+        id: check-dir
+        run: |
+          YEAR="${{ github.event.inputs.year }}"
+          
+          # Check if /vstax/YEAR/ directory is accessible
+          HTTP_CODE=$(curl -sI -m 10 "https://sftp.vs.ch/vstax/${YEAR}/" | grep -E "^HTTP" | awk '{print $2}')
+          
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "403" ]; then
+            echo "✓ Directory exists (status: $HTTP_CODE)"
+            echo "directory_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "✗ Directory not found (status: $HTTP_CODE)"
+            echo "directory_ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Find latest version
+        if: steps.check-dir.outputs.directory_ok == 'true'
+        id: find-version
+        run: |
+          YEAR="${{ github.event.inputs.year }}"
+          TMPFILE="/tmp/versions_${YEAR}.txt"
+          
+          echo "Scanning for all available versions in /vstax/${YEAR}/..."
+          
+          # Try a wide range of versions and collect all that exist
+          for major in $(seq 1 20); do
+            for minor in $(seq 0 50); do
+              for build in $(seq 0 200 10); do
+                TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.${major}.${minor}-${build}_amd64.deb"
+                
+                HTTP_CODE=$(curl -sI -m 3 "$TEST_URL" | grep -E "^HTTP" | awk '{print $2}')
+                
+                if [ "$HTTP_CODE" = "200" ]; then
+                  VERSION="1.${major}.${minor}-${build}"
+                  echo "$VERSION" >> $TMPFILE
+                fi
+              done
+            done
+          done
+          
+          echo ""
+          echo "Found versions:"
+          cat $TMPFILE 2>/dev/null || echo "No versions found"
+          
+          # Sort versions numerically and get the latest
+          if [ -f "$TMPFILE" ] && [ -s "$TMPFILE" ]; then
+            LATEST=$(sort -V -t. -k1,1 -k2,2 -k3,3 "$TMPFILE" | tail -1)
+            BUILD=$(echo "$LATEST" | grep -oP '\d+$')
+            MINOR=$(echo "$LATEST" | grep -oP '[0-9]+\.[0-9]+\.\K\d+')
+            MAJOR=$(echo "$LATEST" | grep -oP '^[0-9]+\.\K[0-9]+')
+            
+            DEB_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_${LATEST}_amd64.deb"
+            
+            echo ""
+            echo "✓ Latest version: $LATEST"
+            echo "✓ Download URL: $DEB_URL"
+            
+            echo "version=$LATEST" >> $GITHUB_OUTPUT
+            echo "deb-url=$DEB_URL" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+            
+            # Download and verify SHA256
+            curl -L "$DEB_URL" -o vstax.deb
+            SHA256=$(sha256sum vstax.deb | cut -d' ' -f1)
+            echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+            echo "$SHA256" > /tmp/sha_${YEAR}.txt
+          else
+            echo "✗ No versions found in /vstax/${YEAR}/"
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Report results
+        id: report
+        run: |
+          YEAR="${{ github.event.inputs.year }}"
+          if [ "${{ steps.find-version.outputs.found }}" = "true" ]; then
+            echo "✓ VSTax $YEAR ready for manifest!"
+            echo "detected=true" >> $GITHUB_OUTPUT
+            echo "year=$YEAR" >> $GITHUB_OUTPUT
+          else
+            echo "✗ No version found for $YEAR yet"
+            echo "detected=false" >> $GITHUB_OUTPUT
+          fi
+
+  generate-manifests:
+    needs: check-year
+    if: needs.check-year.outputs.detected == 'true'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get current date
+        id: date
+        run: echo "date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
+      
+      - name: Generate Flatpak manifest
+        run: |
+          YEAR="${{ needs.check-year.outputs.year }}"
+          SHA256="${{ needs.check-year.outputs.sha256 }}"
+          VERSION="${{ needs.check-year.outputs.version }}"
+          DEB_URL="${{ needs.check-year.outputs.deb-url }}"
+          
+          cat > ch.abraxas.vstax${YEAR}.yaml << EOF
+          # VSTax ${YEAR} Flatpak Manifest
+          # Auto-generated on ${{ steps.date.outputs.date }}
+          # Downloaded from: ${DEB_URL}
+          app-id: ch.abraxas.vstax${YEAR}
+          runtime: org.gnome.Platform
+          runtime-version: '50'
+          sdk: org.gnome.Sdk
+          command: vstax${YEAR}
+          finish-args:
+            - --socket=wayland
+            - --socket=x11
+            - --socket=fallback-x11
+            - --share=ipc
+            - --socket=session-bus
+            - --socket=pulseaudio
+            - --device=dri
+            - --share=network
+            - --persist=.vstax${YEAR}
+            - --filesystem=host
+            - --filesystem=xdg-cache
+            - --filesystem=xdg-config
+            - --filesystem=xdg-data
+            - --filesystem=~/.local/share
+            - --talk-name=org.freedesktop.Notifications
+            - --talk-name=org.gnome.SessionManager
+            - --filesystem=xdg-run/gvfsd
+          modules:
+            - name: vstax${YEAR}
+              buildsystem: simple
+              build-commands:
+                - mkdir -p deb-extract && ar -x vstax${YEAR}.deb --output deb-extract && mkdir -p extracted && zstd -d -c deb-extract/data.tar.zst | tar -xf - -C extracted && cp -r extracted/usr/share/vstax${YEAR}/* . && rm -rf deb-extract extracted
+                - sed -i 's|cd /usr/share/vstax${YEAR}|cd /app/share/vstax${YEAR}|g' vstax${YEAR}.sh
+                - sed -i 's|/usr/bin/java|/app/share/vstax${YEAR}/jre/bin/java|g' vstax${YEAR}.sh
+                - sed -i 's|jre/bin/java -Xmx|jre/bin/java -Djdk.xml.enableExtensionFunctions=true -Xmx|g' vstax${YEAR}.sh
+                - mkdir -p /app/share/vstax${YEAR} && cp -r . /app/share/vstax${YEAR}/
+                - install -Dm 755 /app/share/vstax${YEAR}/vstax${YEAR}.sh /app/bin/vstax${YEAR}
+                - install -Dm 644 /app/share/vstax${YEAR}/vstax${YEAR}.png /app/share/icons/hicolor/256x256/apps/ch.abraxas.vstax${YEAR}.png
+                - install -Dm 644 ch.abraxas.vstax${YEAR}.desktop -t /app/share/applications/
+                - install -Dm 644 ch.abraxas.vstax${YEAR}.metainfo.xml /app/share/metainfo/ch.abraxas.vstax${YEAR}.metainfo.xml
+              sources:
+                - type: file
+                  url: ${DEB_URL}
+                  sha256: ${SHA256}
+                - type: file
+                  path: ch.abraxas.vstax${YEAR}.desktop
+                - type: file
+                  path: ch.abraxas.vstax${YEAR}.metainfo.xml
+          EOF
+      
+      - name: Create desktop file
+        run: |
+          YEAR="${{ needs.check-year.outputs.year }}"
+          cat > ch.abraxas.vstax${YEAR}.desktop << EOF
+          [Desktop Entry]
+          Name=VSTax ${YEAR}
+          Comment=Swiss Federal Tax Declaration Software
+          Exec=vstax${YEAR}
+          Icon=ch.abraxas.vstax${YEAR}
+          Terminal=false
+          Type=Application
+          Categories=Application;Office;Accounting;
+          StartupWMClass=vstax${YEAR}
+          EOF
+      
+      - name: Create metainfo.xml
+        run: |
+          YEAR="${{ needs.check-year.outputs.year }}"
+          cat > ch.abraxas.vstax${YEAR}.metainfo.xml << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <component type="desktop-application">
+            <id>ch.abraxas.vstax${YEAR}</id>
+            <name>VSTax ${YEAR}</name>
+            <summary>Swiss Federal Tax Declaration Software</summary>
+            <description>
+              <p>Official VSTax software for Swiss tax declarations for Canton Vaud (VD).</p>
+              <p>Supports tax forms for year ${YEAR}.</p>
+              <p>Bundled with JDK for compatibility with modern Linux distributions.</p>
+            </description>
+            <url type="homepage">https://www.vs.ch/vstax</url>
+            <url type="bugtracker">https://www.vs.ch/vstax/support</url>
+            <launchable id="ch.abraxas.vstax${YEAR}.desktop"/>
+            <metadata_license>CC0-1.0</metadata_license>
+            <project_license>proprietary</project_license>
+            <content_rating type="ogami" version="1.0">
+              <content_attribute id="social-info">low</content_attribute>
+            </content_rating>
+            <releases>
+              <release version="${{ needs.check-year.outputs.version }}" date="${{ steps.date.outputs.date }}"/>
+            </releases>
+          </component>
+          EOF
+      
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: "Add VSTax ${{ needs.check-year.outputs.year }}"
+          title: "Add VSTax ${{ needs.check-year.outputs.year }}"
+          body: |
+            ## ✅ Auto-detected VSTax ${{ needs.check-year.outputs.year }}
+            
+            ### Details
+            - **Year**: ${{ needs.check-year.outputs.year }}
+            - **Version**: ${{ needs.check-year.outputs.version }}
+            - **URL**: ${{ needs.check-year.outputs.deb-url }}
+            - **SHA256**: `${{ needs.check-year.outputs.sha256 }}`
+            - **Generated**: ${{ steps.date.outputs.date }}
+            
+            ### Files Added
+            - `ch.abraxas.vstax${{ needs.check-year.outputs.year }}.yaml` - Flatpak manifest
+            - `ch.abraxas.vstax${{ needs.check-year.outputs.year }}.desktop` - Desktop entry
+            - `ch.abraxas.vstax${{ needs.check-year.outputs.year }}.metainfo.xml` - AppStream metadata
+            
+            ### Installation
+            After merging, users can install via:
+            ```bash
+            flatpak remote-add --if-not-exists vstax https://codeberg.org/username/vstax-flatpak/
+            flatpak install vstax ch.abraxas.vstax${{ needs.check-year.outputs.year }}
+            ```
+          branch: vstax-${{ needs.check-year.outputs.year }}
+          delete-branch: true
+          token: ${{ secrets.GITHUB_TOKEN }}
