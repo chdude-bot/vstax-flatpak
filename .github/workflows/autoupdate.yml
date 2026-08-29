@@ -53,15 +53,15 @@ jobs:
           echo "Scanning for available versions in /vstax/${YEAR}/..."
           
           # Scan all combinations of major.minor.build
-          for major in $(seq 1 10); do
-            for minor in $(seq 0 10); do
+          for patch in $(seq 0 10); do
+            for patch in $(seq 0 10); do
               for build in $(seq 0 200 5); do
-                TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.${major}.${minor}-${build}_amd64.deb"
+                TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.${minor}.${patch}-${build}_amd64.deb"
                 
                 HTTP_CODE=$(curl -sI -m 2 "$TEST_URL" | grep -E "^HTTP" | awk '{print $2}')
                 
                 if [ "$HTTP_CODE" = "200" ]; then
-                  VERSION="1.${major}.${minor}-${build}"
+                  VERSION="1.${minor}.${patch}-${build}"
                   echo "$VERSION" >> $TMPFILE
                   echo "✓ Found: vstax${YEAR}_${VERSION}"
                 fi
@@ -78,7 +78,7 @@ jobs:
             LATEST=$(sort -V -t. -k1,1 -k2,2 -k3,3 "$TMPFILE" | tail -1)
             BUILD=$(echo "$LATEST" | grep -oP '\d+$')
             MINOR=$(echo "$LATEST" | grep -oP '[0-9]+\.[0-9]+\.\K\d+')
-            MAJOR=$(echo "$LATEST" | grep -oP '^[0-9]+\.\K[0-9]+')
+            PATCH=$(echo "$LATEST" | grep -oP '[0-9]+.K[0-9]+'
             
             DEB_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_${LATEST}_amd64.deb"
             
