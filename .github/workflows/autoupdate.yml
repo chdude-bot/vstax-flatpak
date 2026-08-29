@@ -74,6 +74,10 @@ jobs:
           echo "deb-url=$DEB_URL" >> $GITHUB_OUTPUT
           echo "found=true" >> $GITHUB_OUTPUT
           echo "year=$YEAR" >> $GITHUB_OUTPUT
+          
+          echo "DEBUG: Outputs written"
+          echo "debug=done" >> $GITHUB_OUTPUT
+      
       - name: Report results
         id: report
         run: |
