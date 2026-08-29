@@ -74,8 +74,12 @@ jobs:
           echo "deb-url=$DEB_URL" >> $GITHUB_OUTPUT
           echo "found=true" >> $GITHUB_OUTPUT
           echo "year=$YEAR" >> $GITHUB_OUTPUT
+          echo "year=$YEAR" >> "$GITHUB_ENV"
+          echo "version=$VERSION" >> "$GITHUB_ENV"
+          echo "deb-url=$DEB_URL" >> "$GITHUB_ENV"
+          echo "sha256=$SHA256" >> "$GITHUB_ENV"
+          echo "found=true" >> "$GITHUB_ENV"
           
-          echo "DEBUG: Outputs written"
           echo "debug=done" >> $GITHUB_OUTPUT
       
       - name: Report results
@@ -86,6 +90,11 @@ jobs:
             echo "✓ VSTax $YEAR ready for manifest!"
             echo "detected=true" >> $GITHUB_OUTPUT
             echo "year=$YEAR" >> $GITHUB_OUTPUT
+          echo "year=$YEAR" >> "$GITHUB_ENV"
+          echo "version=$VERSION" >> "$GITHUB_ENV"
+          echo "deb-url=$DEB_URL" >> "$GITHUB_ENV"
+          echo "sha256=$SHA256" >> "$GITHUB_ENV"
+          echo "found=true" >> "$GITHUB_ENV"
           else
             echo "✗ No version found for $YEAR yet"
             echo "detected=false" >> $GITHUB_OUTPUT
