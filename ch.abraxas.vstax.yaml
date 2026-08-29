@@ -1,0 +1,47 @@
+# VSTax  Flatpak Manifest
+# Auto-generated on 2026-08-29
+# Downloaded from: 
+app-id: ch.abraxas.vstax
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: vstax
+finish-args:
+  - --socket=wayland
+  - --socket=x11
+  - --socket=fallback-x11
+  - --share=ipc
+  - --socket=session-bus
+  - --socket=pulseaudio
+  - --device=dri
+  - --share=network
+  - --persist=.vstax
+  - --filesystem=host
+  - --filesystem=xdg-cache
+  - --filesystem=xdg-config
+  - --filesystem=xdg-data
+  - --filesystem=~/.local/share
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.gnome.SessionManager
+  - --filesystem=xdg-run/gvfsd
+modules:
+  - name: vstax
+    buildsystem: simple
+    build-commands:
+      - mkdir -p deb-extract && ar -x vstax.deb --output deb-extract && mkdir -p extracted && zstd -d -c deb-extract/data.tar.zst | tar -xf - -C extracted && cp -r extracted/usr/share/vstax/* . && rm -rf deb-extract extracted
+      - sed -i 's|cd /usr/share/vstax|cd /app/share/vstax|g' vstax.sh
+      - sed -i 's|/usr/bin/java|/app/share/vstax/jre/bin/java|g' vstax.sh
+      - sed -i 's|jre/bin/java -Xmx|jre/bin/java -Djdk.xml.enableExtensionFunctions=true -Xmx|g' vstax.sh
+      - mkdir -p /app/share/vstax && cp -r . /app/share/vstax/
+      - install -Dm 755 /app/share/vstax/vstax.sh /app/bin/vstax
+      - install -Dm 644 /app/share/vstax/vstax.png /app/share/icons/hicolor/256x256/apps/ch.abraxas.vstax.png
+      - install -Dm 644 ch.abraxas.vstax.desktop -t /app/share/applications/
+      - install -Dm 644 ch.abraxas.vstax.metainfo.xml /app/share/metainfo/ch.abraxas.vstax.metainfo.xml
+    sources:
+      - type: file
+        url: 
+        sha256: 
+      - type: file
+        path: ch.abraxas.vstax.desktop
+      - type: file
+        path: ch.abraxas.vstax.metainfo.xml

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>ch.abraxas.vstax</id>
+  <name>VSTax </name>
+  <summary>Swiss Federal Tax Declaration Software</summary>
+  <description>
+    <p>Official VSTax software for Swiss tax declarations for Canton Vaud (VD).</p>
+    <p>Supports tax forms for year .</p>
+    <p>Bundled with JDK for compatibility with modern Linux distributions.</p>
+  </description>
+  <url type="homepage">https://www.vs.ch/vstax</url>
+  <url type="bugtracker">https://www.vs.ch/vstax/support</url>
+  <launchable id="ch.abraxas.vstax.desktop"/>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>proprietary</project_license>
+  <content_rating type="ogami" version="1.0">
+    <content_attribute id="social-info">low</content_attribute>
+  </content_rating>
+  <releases>
+    <release version="" date="2026-08-29"/>
+  </releases>
+</component>
