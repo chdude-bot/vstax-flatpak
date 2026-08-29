@@ -48,29 +48,27 @@ jobs:
         run: |
           YEAR="${{ github.event.inputs.year }}"
           TMPFILE="/tmp/versions_${YEAR}.txt"
-          rm -f $TMPFILE
           
-          echo "Scanning for available versions in /vstax/${YEAR}/..."
+          echo "Scanning for all available versions in /vstax/${YEAR}/..."
           
-          # Scan all combinations of major.minor.build
+          # Try a wide range of versions and collect all that exist
           for major in $(seq 1 10); do
             for minor in $(seq 0 10); do
               for build in $(seq 0 200 5); do
                 TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.${major}.${minor}-${build}_amd64.deb"
                 
-                HTTP_CODE=$(curl -sI -m 2 "$TEST_URL" | grep -E "^HTTP" | awk '{print $2}')
+                HTTP_CODE=$(curl -sI -m 3 "$TEST_URL" | grep -E "^HTTP" | awk '{print $2}')
                 
                 if [ "$HTTP_CODE" = "200" ]; then
                   VERSION="1.${major}.${minor}-${build}"
                   echo "$VERSION" >> $TMPFILE
-                  echo "✓ Found: vstax${YEAR}_${VERSION}"
                 fi
               done
             done
           done
           
           echo ""
-          echo "All found versions:"
+          echo "Found versions:"
           cat $TMPFILE 2>/dev/null || echo "No versions found"
           
           # Sort versions numerically and get the latest
@@ -99,6 +97,7 @@ jobs:
             echo "✗ No versions found in /vstax/${YEAR}/"
             echo "found=false" >> $GITHUB_OUTPUT
           fi
+
       - name: Report results
         id: report
         run: |
