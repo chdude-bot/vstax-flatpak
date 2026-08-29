@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       year: ${{ steps.check.outputs.year }}
-      detected: ${{ steps.check.outputs.detected }}
+      detected: ${{ steps.report.outputs.detected }}
       deb-url: ${{ steps.check.outputs.deb-url }}
       sha256: ${{ steps.check.outputs.sha256 }}
       version: ${{ steps.check.outputs.version }}
