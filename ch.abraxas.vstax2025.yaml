@@ -1,0 +1,41 @@
+# VSTax 2025 Flatpak Manifest
+# Auto-generated on 2026-08-29
+# Downloaded from: https://sftp.vs.ch/vstax/2025/vstax2025_1.0.10-147_amd64.deb
+app-id: ch.abraxas.vstax2025
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.openjdk24
+
+default-arch: x86-64
+separate-locales: false
+command: vstax2025
+finish-args:
+  - --share=ipc
+  - --socket=pulseaudio
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=all
+  - --filesystem=home
+  - --filesystem=xdg-run/user-distro:ro
+
+modules:
+  - name: vstax2025
+    type: file
+    url: https://sftp.vs.ch/vstax/2025/vstax2025_1.0.10-147_amd64.deb
+    sha256: 69fc4fa1813a7a746e4aa1d311b2ad803d985c7e40be0f4ab2f18f0976071418
+    buildsystem: simple
+    build-commands:
+      - install -Dm 755 /srv/vstax2025/usr/bin/vstax /app/bin/vstax2025
+      - install -Dm 644 /srv/vstax2025/usr/share/vstax2025/vstax2025.png /app/share/icons/hicolor/256x256/apps/ch.abraxas.vstax2025.png
+      - install -Dm 644 ch.abraxas.vstax2025.desktop -t /app/share/applications/
+      - install -Dm 644 ch.abraxas.vstax2025.metainfo.xml /app/share/metainfo/ch.abraxas.vstax2025.metainfo.xml
+    sources:
+      - type: file
+        url: https://sftp.vs.ch/vstax/2025/vstax2025_1.0.10-147_amd64.deb
+        sha256: 69fc4fa1813a7a746e4aa1d311b2ad803d985c7e40be0f4ab2f18f0976071418
+      - type: file
+        path: ch.abraxas.vstax2025.desktop
+      - type: file
+        path: ch.abraxas.vstax2025.metainfo.xml
