@@ -217,6 +217,7 @@ jobs:
           EOF
       
       - name: Create pull request
+        if: steps.check-file.outputs.manifest_exists != 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "Add VSTax ${{ needs.check-year.outputs.year }}"
