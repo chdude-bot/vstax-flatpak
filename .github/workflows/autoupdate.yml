@@ -200,7 +200,10 @@ jobs:
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@v8
+        env:
+          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Add VSTax ${{ needs.check-year.outputs.year }}"
           title: "Add VSTax ${{ needs.check-year.outputs.year }}"
           body: |
