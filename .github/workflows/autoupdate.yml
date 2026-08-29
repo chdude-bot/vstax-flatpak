@@ -18,11 +18,11 @@ jobs:
   check-year:
     runs-on: ubuntu-22.04
     outputs:
-      year: ${{ steps.check.outputs.year }}
-      detected: ${{ steps.report.outputs.detected }}
-      deb-url: ${{ steps.check.outputs.deb-url }}
-      sha256: ${{ steps.check.outputs.sha256 }}
-      version: ${{ steps.check.outputs.version }}
+      year: ${{ steps.find-version.outputs.year }}
+      detected: ${{ steps.find-version.outputs.detected }}
+      deb-url: ${{ steps.find-version.outputs.deb-url }}
+      sha256: ${{ steps.find-version.outputs.sha256 }}
+      version: ${{ steps.find-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -99,10 +99,10 @@ jobs:
       
       - name: Generate Flatpak manifest
         run: |
-          YEAR="${{ steps.report.outputs.year }}"
-          SHA256="${{ steps.report.outputs.sha256 }}"
-          VERSION="${{ steps.report.outputs.version }}"
-          DEB_URL="${{ steps.report.outputs.deb-url }}"
+          YEAR="${{ steps.find-version.outputs.year }}"
+          SHA256="${{ steps.find-version.outputs.sha256 }}"
+          VERSION="${{ steps.find-version.outputs.version }}"
+          DEB_URL="${{ steps.find-version.outputs.deb-url }}"
           
           cat > ch.abraxas.vstax${YEAR}.yaml << EOF
           # VSTax ${YEAR} Flatpak Manifest
@@ -156,7 +156,7 @@ jobs:
       
       - name: Create desktop file
         run: |
-          YEAR="${{ steps.report.outputs.year }}"
+          YEAR="${{ steps.find-version.outputs.year }}"
           cat > ch.abraxas.vstax${YEAR}.desktop << EOF
           [Desktop Entry]
           Name=VSTax ${YEAR}
@@ -171,7 +171,7 @@ jobs:
       
       - name: Create metainfo.xml
         run: |
-          YEAR="${{ steps.report.outputs.year }}"
+          YEAR="${{ steps.find-version.outputs.year }}"
           cat > ch.abraxas.vstax${YEAR}.metainfo.xml << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <component type="desktop-application">
@@ -192,7 +192,7 @@ jobs:
               <content_attribute id="social-info">low</content_attribute>
             </content_rating>
             <releases>
-              <release version="${{ steps.report.outputs.version }}" date="${{ steps.date.outputs.date }}"/>
+              <release version="${{ steps.find-version.outputs.version }}" date="${{ steps.date.outputs.date }}"/>
             </releases>
           </component>
           EOF
@@ -204,28 +204,28 @@ jobs:
           PERSONAL_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
         with:
           token: ${{ secrets.ACTIONS_TOKEN }}
-          commit-message: "Add VSTax ${{ steps.report.outputs.year }}"
-          title: "Add VSTax ${{ steps.report.outputs.year }}"
+          commit-message: "Add VSTax ${{ steps.find-version.outputs.year }}"
+          title: "Add VSTax ${{ steps.find-version.outputs.year }}"
           body: |
-            ## ✅ Auto-detected VSTax ${{ steps.report.outputs.year }}
+            ## ✅ Auto-detected VSTax ${{ steps.find-version.outputs.year }}
             
             ### Details
-            - **Year**: ${{ steps.report.outputs.year }}
-            - **Version**: ${{ steps.report.outputs.version }}
-            - **URL**: ${{ steps.report.outputs.deb-url }}
-            - **SHA256**: `${{ steps.report.outputs.sha256 }}`
+            - **Year**: ${{ steps.find-version.outputs.year }}
+            - **Version**: ${{ steps.find-version.outputs.version }}
+            - **URL**: ${{ steps.find-version.outputs.deb-url }}
+            - **SHA256**: `${{ steps.find-version.outputs.sha256 }}`
             - **Generated**: ${{ steps.date.outputs.date }}
             
             ### Files Added
-            - `ch.abraxas.vstax${{ steps.report.outputs.year }}.yaml` - Flatpak manifest
-            - `ch.abraxas.vstax${{ steps.report.outputs.year }}.desktop` - Desktop entry
-            - `ch.abraxas.vstax${{ steps.report.outputs.year }}.metainfo.xml` - AppStream metadata
+            - `ch.abraxas.vstax${{ steps.find-version.outputs.year }}.yaml` - Flatpak manifest
+            - `ch.abraxas.vstax${{ steps.find-version.outputs.year }}.desktop` - Desktop entry
+            - `ch.abraxas.vstax${{ steps.find-version.outputs.year }}.metainfo.xml` - AppStream metadata
             
             ### Installation
             After merging, users can install via:
             ```bash
             flatpak remote-add --if-not-exists vstax https://codeberg.org/username/vstax-flatpak/
-            flatpak install vstax ch.abraxas.vstax${{ steps.report.outputs.year }}
+            flatpak install vstax ch.abraxas.vstax${{ steps.find-version.outputs.year }}
             ```
-          branch: vstax-${{ steps.report.outputs.year }}
+          branch: vstax-${{ steps.find-version.outputs.year }}
           delete-branch: true
