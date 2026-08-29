@@ -32,7 +32,7 @@ jobs:
           YEAR="${{ github.event.inputs.year }}"
           
           # Check if /vstax/YEAR/ directory is accessible
-          HTTP_CODE=$(curl -sI -m 10 "https://sftp.vs.ch/vstax/${YEAR}/" | grep "HTTP" | awk '{print $2}')
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://sftp.vs.ch/vstax/${YEAR}/"))
           
           if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "403" ]; then
             echo "✓ Directory exists (status: $HTTP_CODE)"
@@ -58,7 +58,7 @@ jobs:
               for build in $(seq 0 200 1); do
                 TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.${minor}.${patch}-${build}_amd64.deb"
                 
-                HTTP_CODE=$(curl -sI -m 2 "$TEST_URL" | grep "HTTP" | awk '{print $2}')
+                HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TEST_URL"))
                 
                 if [ "$HTTP_CODE" = "200" ]; then
                   VERSION="1.${minor}.${patch}-${build}"
