@@ -175,7 +175,7 @@ jobs:
           StartupWMClass=vstax${YEAR}
           EOF
       
-      - name: Create metainfo.xml
+
       - name: Check if manifest exists
         id: check-file
         run: |
@@ -187,8 +187,6 @@ jobs:
             echo "manifest_exists=false" >> $GITHUB_OUTPUT
             echo "✗ No existing manifest found"
           fi
-
-
         run: |
           YEAR="${{ needs.check-year.outputs.year }}"
           cat > ch.abraxas.vstax${YEAR}.metainfo.xml << EOF
