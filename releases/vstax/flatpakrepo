@@ -1,6 +1,0 @@
-[Flatpak Repository]
-url=https://github.com/chdude-bot/vstax-flatpak/releases/
-gpg-key-sigs=
-
-[Application 'ch.abraxas.vstax']
-branch=stable

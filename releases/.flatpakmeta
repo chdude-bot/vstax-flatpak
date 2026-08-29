@@ -1,7 +1,0 @@
-{
-  "flatpakrepo": "1.0",
-  "title": "VSTax Switzerland",
-  "description": "Flatpak repository for VSTax - Swiss Federal Tax Declaration Software",
-  "appstream-id": "ch.abraxas.vstax",
-  "homepage": "https://www.vs.ch/vstax"
-}
