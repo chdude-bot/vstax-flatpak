@@ -1,8 +1,12 @@
-# 🚀 VSTax Flatpak Auto-Update Workflow
+# 🚀 VSTax Flatpak Repository
 
 ## What This Does
 
-Automatically detects when VSTax releases a new year's version (2025, 2026, 2027, etc.) and creates a Flatpak manifest for installation via KDE Discover.
+This repository provides VSTax (Swiss Federal Tax Declaration Software) as a Flatpak package. It includes:
+
+- **Auto-update workflow** that detects new VSTax yearly releases
+- **Pre-generated manifests** for each VSTax version (2025, 2026, etc.)
+- **GitHub Pages deployment** for easy Flatpak remote access
 
 ## How It Works
 
@@ -49,25 +53,34 @@ cp test-detection.yml .github/workflows/  # optional
 
 When VSTax releases a new version:
 
-1. Go to: `https://codeberg.org/your-username/vstax-flatpak/actions`
-2. Click "Auto-Update VSTax"
+1. Go to: `https://github.com/chdude-bot/vstax-flatpak/actions`
+2. Select "Auto-Update VSTax" workflow
 3. Click "Run workflow"
 4. Enter the year (e.g., `2026`)
 5. The workflow will detect, download, and create a PR
 
 ## Installation for Users
 
-After the PR is merged:
+After deploying the repository (see below):
 
 ```bash
 # Add the Flatpak repository
-flatpak remote-add --if-not-exists vstax https://codeberg.org/username/vstax-flatpak/
+flatpak remote-add --if-not-exists vstax https://github.com/chdude-bot/vstax-flatpak/releases/
 
 # Install VSTax 2025
 flatpak install vstax ch.abraxas.vstax2025
 
 # Run it
 flatpak run ch.abraxas.vstax2025
+```
+
+### Quick Install
+
+You can also install directly using the .flatpakref file:
+
+```bash
+# Download and install
+flatpak install --assumeyes https://github.com/chdude-bot/vstax-flatpak/releases/ch.abraxas.vstax2025.flatpakref
 ```
 
 ## Version Patterns
@@ -126,5 +139,17 @@ No maintenance required! The workflow:
 - Users can install any year they want
 
 ---
+
+## GitHub Pages Deployment
+
+To make this repository accessible as a Flatpak remote:
+
+1. **Enable GitHub Pages** in Settings → Pages
+2. **Select source**: Deploy from branch (main)
+3. **Wait for deployment** (a few minutes)
+4. **Your Flatpak remote URL** will be: `https://chdude-bot.github.io/vstax-flatpak/releases/`
+
+Or use the GitHub repository releases URL directly:
+`https://github.com/chdude-bot/vstax-flatpak/releases/`
 
 **Ready to deploy!** 🎉

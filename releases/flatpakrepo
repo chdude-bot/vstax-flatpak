@@ -1,0 +1,7 @@
+# Flatpak Repository for VSTax
+# Auto-generated repository configuration
+
+[Flatpak Repository]
+title=VSTax Switzerland
+url=https://github.com/chdude-bot/vstax-flatpak/releases/
+gpg-key-sigs=

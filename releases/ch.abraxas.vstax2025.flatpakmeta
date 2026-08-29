@@ -1,0 +1,17 @@
+{
+  "metadata": {
+    "app-id": "ch.abraxas.vstax2025",
+    "title": "VSTax 2025",
+    "version": "1.0.10-147",
+    "description": "Swiss Federal Tax Declaration Software for Vaud"
+  },
+  "releases": [
+    {
+      "version": "1.0.10-147",
+      "date": "2026-08-29",
+      "url": "https://sftp.vs.ch/vstax/2025/vstax2025_1.0.10-147_amd64.deb",
+      "sha256": "69fc4fa1813a7a746e4aa1d311b2ad803d985c7e40be0f4ab2f18f0976071418"
+    }
+  ],
+  "repository": "https://github.com/chdude-bot/vstax-flatpak/"
+}
