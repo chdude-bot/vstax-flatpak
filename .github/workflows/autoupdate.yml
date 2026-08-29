@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       year: ${{ steps.check.outputs.year }}
-      detected: ${{ steps.report.outputs.detected }}
+      detected: ${{ steps.check.outputs.detected }}
       deb-url: ${{ steps.check.outputs.deb-url }}
       sha256: ${{ steps.check.outputs.sha256 }}
       version: ${{ steps.check.outputs.version }}
@@ -32,7 +32,7 @@ jobs:
           YEAR="${{ github.event.inputs.year }}"
           
           # Check if /vstax/YEAR/ directory is accessible
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://sftp.vs.ch/vstax/${YEAR}/")
+          HTTP_CODE=$(curl -sI -m 10 "https://sftp.vs.ch/vstax/${YEAR}/" | grep -E "^HTTP" | awk '{print $2}')
           
           if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "403" ]; then
             echo "✓ Directory exists (status: $HTTP_CODE)"
@@ -47,38 +47,57 @@ jobs:
         id: find-version
         run: |
           YEAR="${{ github.event.inputs.year }}"
+          TMPFILE="/tmp/versions_${YEAR}.txt"
           
-          echo "Scanning for VSTax $YEAR version..."
+          echo "Scanning for all available versions in /vstax/${YEAR}/..."
           
-          # Start from build 147 and go backwards to find the latest available
-          for build in $(seq 150 -1 130); do
-            TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.0.10-${build}_amd64.deb"
-            
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TEST_URL")
-            
-            if [ "$HTTP_CODE" = "200" ]; then
-              VERSION="1.0.10-${build}"
-              DEB_URL="$TEST_URL"
-              echo "✓ Found: vstax${YEAR}_${VERSION}"
-            elif [ "$HTTP_CODE" = "404" ]; then
-              # Previous build was the latest
-              PREVIOUS_BUILD=$((build - 1))
-              VERSION="1.0.10-${PREVIOUS_BUILD}"
-              DEB_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_${VERSION}_amd64.deb"
-              echo "✓ Latest version: $VERSION"
-              echo "✓ Download URL: $DEB_URL"
-              break
-            fi
+          # Try a wide range of versions and collect all that exist
+          for major in $(seq 1 10); do
+            for minor in $(seq 0 10); do
+              for build in $(seq 0 200 5); do
+                TEST_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_1.${major}.${minor}-${build}_amd64.deb"
+                
+                HTTP_CODE=$(curl -sI -m 3 "$TEST_URL" | grep -E "^HTTP" | awk '{print $2}')
+                
+                if [ "$HTTP_CODE" = "200" ]; then
+                  VERSION="1.${major}.${minor}-${build}"
+                  echo "$VERSION" >> $TMPFILE
+                fi
+              done
+            done
           done
           
-          # Download and verify SHA256
-          curl -L "$DEB_URL" -o vstax.deb
-          SHA256=$(sha256sum vstax.deb | cut -d' ' -f1)
-          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          echo ""
+          echo "Found versions:"
+          cat $TMPFILE 2>/dev/null || echo "No versions found"
           
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "deb-url=$DEB_URL" >> $GITHUB_OUTPUT
-          echo "found=true" >> $GITHUB_OUTPUT
+          # Sort versions numerically and get the latest
+          if [ -f "$TMPFILE" ] && [ -s "$TMPFILE" ]; then
+            LATEST=$(sort -V -t. -k1,1 -k2,2 -k3,3 "$TMPFILE" | tail -1)
+            BUILD=$(echo "$LATEST" | grep -oP '\d+$')
+            MINOR=$(echo "$LATEST" | grep -oP '[0-9]+\.[0-9]+\.\K\d+')
+            MAJOR=$(echo "$LATEST" | grep -oP '^[0-9]+\.\K[0-9]+')
+            
+            DEB_URL="https://sftp.vs.ch/vstax/${YEAR}/vstax${YEAR}_${LATEST}_amd64.deb"
+            
+            echo ""
+            echo "✓ Latest version: $LATEST"
+            echo "✓ Download URL: $DEB_URL"
+            
+            echo "version=$LATEST" >> $GITHUB_OUTPUT
+            echo "deb-url=$DEB_URL" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+            
+            # Download and verify SHA256
+            curl -L "$DEB_URL" -o vstax.deb
+            SHA256=$(sha256sum vstax.deb | cut -d' ' -f1)
+            echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+            echo "$SHA256" > /tmp/sha_${YEAR}.txt
+          else
+            echo "✗ No versions found in /vstax/${YEAR}/"
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Report results
         id: report
         run: |
@@ -175,18 +194,7 @@ jobs:
           StartupWMClass=vstax${YEAR}
           EOF
       
-
-      - name: Check if manifest exists
-        id: check-file
-        run: |
-          YEAR="${{ needs.check-year.outputs.year }}"
-          if [ -f "ch.abraxas.vstax${YEAR}.yaml" ]; then
-            echo "manifest_exists=true" >> $GITHUB_OUTPUT
-            echo "✓ Manifest already exists for VSTax ${YEAR}"
-          else
-            echo "manifest_exists=false" >> $GITHUB_OUTPUT
-            echo "✗ No existing manifest found"
-          fi
+      - name: Create metainfo.xml
         run: |
           YEAR="${{ needs.check-year.outputs.year }}"
           cat > ch.abraxas.vstax${YEAR}.metainfo.xml << EOF
@@ -214,6 +222,18 @@ jobs:
           </component>
           EOF
       
+
+      - name: Check if manifest exists
+        id: check-file
+        run: |
+          YEAR="${{ needs.check-year.outputs.year }}"
+          if [ -f "ch.abraxas.vstax${YEAR}.yaml" ]; then
+            echo "manifest_exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Manifest already exists for VSTax ${YEAR}"
+          else
+            echo "manifest_exists=false" >> $GITHUB_OUTPUT
+            echo "✗ No existing manifest found"
+          fi
       - name: Create pull request
         if: steps.check-file.outputs.manifest_exists != 'true'
         uses: peter-evans/create-pull-request@v8
