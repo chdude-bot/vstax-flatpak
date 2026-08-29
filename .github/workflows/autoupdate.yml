@@ -32,7 +32,7 @@ jobs:
           YEAR="${{ github.event.inputs.year }}"
           
           # Check if /vstax/YEAR/ directory is accessible
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://sftp.vs.ch/vstax/${YEAR}/"))
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $(curl -s -o /dev/null -w "%{http_code}" "https://sftp.vs.ch/vstax/${YEAR}/")
           
           if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "403" ]; then
             echo "✓ Directory exists (status: $HTTP_CODE)"
