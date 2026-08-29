@@ -1,3 +1,8 @@
-[Flatpak Repository]
-url=https://chdude-bot.github.io/vstax-flatpak/
-gpg-key-sigs=
+<?xml version="1.0" encoding="UTF-8"?>
+<repo xmlns="http://flatpak.org/gschemas/flatpak-repo.xml">
+  <collection>
+    <app id="ch.abraxas.vstax2025" branch="stable" allow="origin">
+      <release version="2025" date="2026-08-30"/>
+    </app>
+  </collection>
+</repo>
