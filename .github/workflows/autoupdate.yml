@@ -31,7 +31,7 @@ jobs:
       - name: Check directory exists
         id: check-dir
         run: |
-          YEAR="${{ github.event.inputs.year }}"
+          YEAR="${{ github.event.inputs.year || "2025" }}"
           
           # Check if /vstax/YEAR/ directory is accessible
           HTTP_CODE=$(curl -sI -m 10 "https://sftp.vs.ch/vstax/${YEAR}/" | grep -E "^HTTP" | awk '{print $2}')
@@ -49,7 +49,7 @@ jobs:
         if: steps.check-dir.outputs.directory_ok == 'true'
         id: find-version
         run: |
-          YEAR="${{ github.event.inputs.year }}"
+          YEAR="${{ github.event.inputs.year || "2025" }}"
           
           echo "Scanning for VSTax $YEAR version..."
           
@@ -87,7 +87,7 @@ jobs:
       - name: Report results
         id: report
         run: |
-          YEAR="${{ github.event.inputs.year }}"
+          YEAR="${{ github.event.inputs.year || "2025" }}"
           if [ "${{ steps.find-version.outputs.found }}" = "true" ]; then
             echo "✓ VSTax $YEAR ready for manifest!"
             echo "detected=true" >> $GITHUB_OUTPUT
