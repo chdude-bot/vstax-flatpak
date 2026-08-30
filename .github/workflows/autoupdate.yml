@@ -320,5 +320,3 @@ jobs:
             flatpak remote-add --if-not-exists vstax https://chdude-bot.github.io/vstax-flatpak/
             flatpak install vstax ch.abraxas.vstax${{ steps.find-version.outputs.year }}
             ```
-          branch: vstax-${{ steps.find-version.outputs.year }}
-          delete-branch: true
