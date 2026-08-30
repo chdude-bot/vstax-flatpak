@@ -17,6 +17,8 @@ on:
 jobs:
   check-year:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     outputs:
       year: ${{ steps.find-version.outputs.year }}
       detected: ${{ steps.find-version.outputs.found }}
