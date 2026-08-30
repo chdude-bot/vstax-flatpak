@@ -288,6 +288,15 @@ jobs:
             "repository": "https://chdude-bot.github.io/vstax-flatpak/"
           }
           EOF
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v8
+        with:
+          commit_message: "Add VSTax ${{ steps.find-version.outputs.year }}: version ${{ steps.find-version.outputs.version }}"
+          commit_author: "VSTax Bot <github@vstax.ch>"
+          commit_user_name: "VSTax Bot"
+          commit_user_email: "github@vstax.ch"
+
       
             flatpak remote-add --if-not-exists vstax https://chdude-bot.github.io/vstax-flatpak/
             flatpak install vstax ch.abraxas.vstax${{ steps.find-version.outputs.year }}
