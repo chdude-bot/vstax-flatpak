@@ -289,35 +289,6 @@ jobs:
           }
           EOF
       
-      - name: Create pull request
-        uses: peter-evans/create-pull-request@v5
-        env:
-          PERSONAL_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
-        with:
-          token: ${{ secrets.ACTIONS_TOKEN }}
-          commit-message: "Add VSTax ${{ steps.find-version.outputs.year }}"
-          title: "Add VSTax ${{ steps.find-version.outputs.year }}"
-          push_to_head: true
-          body: |
-            ## ✅ Auto-detected VSTax ${{ steps.find-version.outputs.year }}
-            
-            ### Details
-            - **Year**: ${{ steps.find-version.outputs.year }}
-            - **Version**: ${{ steps.find-version.outputs.version }}
-            - **URL**: ${{ steps.find-version.outputs.deb-url }}
-            - **SHA256**: `${{ steps.find-version.outputs.sha256 }}`
-            - **Generated**: ${{ steps.date.outputs.date }}
-            
-            ### Files Added
-            - `ch.abraxas.vstax${{ steps.find-version.outputs.year }}.yaml` - Flatpak manifest
-            - `ch.abraxas.vstax${{ steps.find-version.outputs.year }}.desktop` - Desktop entry
-            - `ch.abraxas.vstax${{ steps.find-version.outputs.year }}.metainfo.xml` - AppStream metadata
-            - `ch.abraxas.vstax${{ steps.find-version.outputs.year }}.flatpakref` - Flatpak reference file
-            - `ch.abraxas.vstax${{ steps.find-version.outputs.year }}.flatpakmeta` - Flatpak metadata
-            
-            ### Installation
-            After merging and GitHub Pages deployment, users can install via:
-            ```bash
             flatpak remote-add --if-not-exists vstax https://chdude-bot.github.io/vstax-flatpak/
             flatpak install vstax ch.abraxas.vstax${{ steps.find-version.outputs.year }}
             ```
