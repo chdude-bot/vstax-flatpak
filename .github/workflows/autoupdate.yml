@@ -12,7 +12,7 @@ on:
       year:
         description: 'Year to check (e.g., 2026)'
         required: true
-        default: '2026'
+        default: "2025"
 
 jobs:
   check-year:
