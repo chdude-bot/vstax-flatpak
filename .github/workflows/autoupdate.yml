@@ -297,6 +297,7 @@ jobs:
           token: ${{ secrets.ACTIONS_TOKEN }}
           commit-message: "Add VSTax ${{ steps.find-version.outputs.year }}"
           title: "Add VSTax ${{ steps.find-version.outputs.year }}"
+          push_to_head: true
           body: |
             ## ✅ Auto-detected VSTax ${{ steps.find-version.outputs.year }}
             
